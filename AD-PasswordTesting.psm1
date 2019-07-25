@@ -65,7 +65,8 @@ Function Export-ADData{
             $path = $item.FullName
             $fileContents = Get-Content $path -encoding byte
             $ftprequest.ContentLength = $fileContents.Length;
-            $requestStream = $ftprequest.GetRequestStream();
+            $ftprequest.Method = [System.Net.WebRequestMethods+Ftp]::UploadFile;
+	    $requestStream = $ftprequest.GetRequestStream();
             $requestStream.Write($fileContents, 0, $fileContents.Length);
             $requestStream.Close();
             $response = $ftprequest.GetResponse();
