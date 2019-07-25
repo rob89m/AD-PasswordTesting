@@ -52,10 +52,6 @@ Function Export-ADData
         Get-ChildItem $ExportDir -Recurse -File | Move-Item -Destination $ExportDir
         Get-ChildItem $ExportDir -Directory | Remove-Item
 
-        # Prepends Customer name and date to each file
-        # $Date = Get-Date -UFormat "%Y%m%d"
-        # Get-ChildItem $ExportDir | Rename-Item -NewName { $Customer+"_"+$Date+"_" + $_.Name }
-
         # Uploads files via FTPS
         [Net.ServicePointManager]::ServerCertificateValidationCallback={$true} 
             foreach($item in (dir $ExportDir)) 
