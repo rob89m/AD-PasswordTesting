@@ -37,14 +37,17 @@ Function Export-ADData{
     [CmdletBinding()]
     Param (
         [Parameter(Mandatory=$true)][string]$Customer,
-        [Parameter(Mandatory=$true)][string]$ExportDir,
+        #[Parameter(Mandatory=$true)][string]$ExportDir,
         [Parameter(Mandatory=$true)][string]$FTPAdd,
         [Parameter(Mandatory=$true)][string]$FTPUser,
         [Parameter(Mandatory=$true)][string]$FTPPass
         )
     END
     {
-        # Perform ShadowCopy AD Dump
+        $ExportDir = "C:\Temp\ADExport"
+	mkdir $ExportDir
+	
+	# Perform ShadowCopy AD Dump
         ntdsutil "ac i ntds" "ifm" "create full $ExportDir" q q
 
         # Flatens files into a single directory for upload
