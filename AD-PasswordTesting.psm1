@@ -63,10 +63,15 @@ Function Export-ADData{
 		# Uploads files via FTPS
 		foreach($item in (dir $ExportDir)){
             $path = $item.FullName
-            $fileContents = Get-Content $path -encoding byte
+            $ftprequest = [System.Net.FtpWebRequest]::Create("ftp://"+$FTPAdd+"/"+$Customer);
+			$ftprequest.Method = [System.Net.WebRequestMethods+Ftp]::UploadFile;
+			$ftprequest.UsePassive = $true
+			$ftprequest.UseBinary = $true
+			$ftprequest.EnableSsl = $true
+			$ftprequest.Credentials = New-Object System.Net.NetworkCredential($FTPUser,$FTPPass)
+			$fileContents = Get-Content $path -encoding byte
             $ftprequest.ContentLength = $fileContents.Length;
-            $ftprequest.Method = [System.Net.WebRequestMethods+Ftp]::UploadFile;
-	    $requestStream = $ftprequest.GetRequestStream();
+            $requestStream = $ftprequest.GetRequestStream();
             $requestStream.Write($fileContents, 0, $fileContents.Length);
             $requestStream.Close();
             $response = $ftprequest.GetResponse();
