@@ -54,7 +54,7 @@ Function Export-ADData{
         # Uploads files via FTPS
         [Net.ServicePointManager]::ServerCertificateValidationCallback={$true} 
             foreach($item in (dir $ExportDir)){ 
-                write-output "————————————–" 
+                write-output "-----------------------"
                 $fileName = $item.FullName 
                 write-output $fileName 
                 $ftp = [System.Net.FtpWebRequest]::Create("$FTPAdd"+"$Customer"+$item.Name) 
@@ -142,7 +142,7 @@ Function Run-PasswordTest{
 		}else{
 			foreach ($Folder in $Folders){
 				$key = Get-BootKey -SystemHivePath $Uploads$Folder'\SYSTEM'
-				$DB = $Uploads$Folder'\ntds.dit'
+				$DB = $Uploads+$Folder+"\ntds.dit"
 				Get-ADDBAccount -All -DBPath $DB -BootKey $key | Test-PasswordQuality -WeakPasswordsFile $DicPath | Out-File $ResultsFolder$Folder
 				Write-Host "Password testing for $Folder complete"
 				Write-Host "Removing $Folder AD Data export from server for security purposes"
