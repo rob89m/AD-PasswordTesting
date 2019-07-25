@@ -4,7 +4,7 @@
 		A great password list to use is the NTLM lists available from https://haveibeenpwned.com/Passwords
 
 	.NOTES
-		Version:	1.1
+		Version:	1.2
 		Author: 	Robert Taylor
 		Email:  	rob89m@outlook.com
 #>
@@ -72,6 +72,8 @@ Function Export-ADData{
             Write-Host Upload File Complete, status $response.StatusDescription
             $response.Close();
         }
+		
+		Remove-Item -Path $ExportDir -Force -Recurse
     }
 }
 
