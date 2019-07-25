@@ -1,6 +1,6 @@
-$psdir = "C:\program files\WindowsPowerShell\Modules\ADPasswordTesting\"
-$url = "https://raw.githubusercontent.com/rob89m/ADPasswordTesting/master/ADPasswordTesting.psm1"
-$output = "C:\Program Files\WindowsPowerShell\Modules\ADPasswordTesting\ADPasswordTesting.psm1"
+$psdir = "C:\program files\WindowsPowerShell\Modules\AD-PasswordTesting\"
+$url = "https://raw.githubusercontent.com/rob89m/AD-PasswordTesting/master/AD-PasswordTesting.psm1"
+$output = "C:\Program Files\WindowsPowerShell\Modules\AD-PasswordTesting\AD-PasswordTesting.psm1"
 
 # Check if PS Module directory exists and create is missing
 if (!(Test-Path $psdir))
