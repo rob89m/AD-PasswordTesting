@@ -4,7 +4,7 @@
 		A great password list to use is the NTLM lists available from https://haveibeenpwned.com/Passwords
 
 	.NOTES
-		Version:	1.0
+		Version:	1.1
 		Author: 	Robert Taylor
 		Email:  	rob89m@outlook.com
 #>
@@ -17,13 +17,10 @@ Function Export-ADData{
 			specified FTPS server, and then deletes the files from the local directory
 		 
 		.EXAMPLE
-			Export-ADData -Customer "AIT" -ExportDir "C:\ADExport\ADData" -FTPAdd "ftp://upload.cloud.com.au/" -FTPUser "FTPUser" -FTPPass "MyPassword$123"
+			Export-ADData -Customer "AIT" -FTPAdd "upload.cloud.com.au" -FTPUser "FTPUser" -FTPPass "MyPassword$123"
 		 
 		.PARAMETER Customer
 			Shortcode to internally identify the customer that the data belongs to.
-
-		.PARAMETER ExportDir
-			A path for the ShadowCopy to be stored whilst being processed for upload.
 
 		.PARAMETER FTPAdd
 			Address of the FTP server
@@ -37,53 +34,44 @@ Function Export-ADData{
     [CmdletBinding()]
     Param (
         [Parameter(Mandatory=$true)][string]$Customer,
-        #[Parameter(Mandatory=$true)][string]$ExportDir,
         [Parameter(Mandatory=$true)][string]$FTPAdd,
         [Parameter(Mandatory=$true)][string]$FTPUser,
         [Parameter(Mandatory=$true)][string]$FTPPass
         )
-    END
-    {
+    END{
         $ExportDir = "C:\Temp\ADExport"
-	mkdir $ExportDir
-	
-	# Perform ShadowCopy AD Dump
+        mkdir $ExportDir
+        
+        # Perform ShadowCopy AD Dump
         ntdsutil "ac i ntds" "ifm" "create full $ExportDir" q q
 
         # Flatens files into a single directory for upload
         Get-ChildItem $ExportDir -Recurse -File | Move-Item -Destination $ExportDir
         Get-ChildItem $ExportDir -Directory | Remove-Item
 
-        # Uploads files via FTPS
-        [Net.ServicePointManager]::ServerCertificateValidationCallback={$true} 
-            foreach($item in (dir $ExportDir)){ 
-                write-output "-----------------------"
-                $fileName = $item.FullName 
-                write-output $fileName 
-                $ftp = [System.Net.FtpWebRequest]::Create("$FTPAdd"+"$Customer"+$item.Name) 
-                $ftp = [System.Net.FtpWebRequest]$ftp 
-                $ftp.UsePassive = $true 
-                $ftp.UseBinary = $true 
-                $ftp.EnableSsl = $true 
-                $ftp.Credentials = new-object System.Net.NetworkCredential("$FTPUser","$FTPPass")
-                $ftp.Method = [System.Net.WebRequestMethods+Ftp]::UploadFile 
-                $rs = $ftp.GetRequestStream() 
-
-                $reader = New-Object System.IO.FileStream ($fileName, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read) 
-                [byte[]]$buffer = new-object byte[] 4096 
-                [int]$count = 0 
-                do{ 
-                    $count = $reader.Read($buffer, 0, $buffer.Length) 
-                    $rs.Write($buffer,0,$count) 
-                } while ($count -gt 0) 
-                $reader.Close() 
-                $rs.Close() 
-                write-output "+transfer completed"
-			}
-			
-		# Deletes uploaded files
-			$item.Delete() 
-			write-output "+file deleted" 
+        # Create Customer folder in FTP
+		$ftprequest = [System.Net.FtpWebRequest]::Create("ftp://"+$FTPAdd+"/"+$Customer);
+		$ftprequest.UsePassive = $true
+		$ftprequest.UseBinary = $true
+		$ftprequest.EnableSsl = $true
+		$ftprequest.Credentials = New-Object System.Net.NetworkCredential($FTPUser,$FTPPass)
+		$ftprequest.Method = [System.Net.WebRequestMethods+Ftp]::MakeDirectory
+		$response = $ftprequest.GetResponse();
+		Write-Host Create Folder Complete, status $response.StatusDescription
+		$response.Close();
+		
+		# Uploads files via FTPS
+		foreach($item in (dir $ExportDir)){
+            $path = $item.FullName
+            $fileContents = Get-Content $path -encoding byte
+            $ftprequest.ContentLength = $fileContents.Length;
+            $requestStream = $ftprequest.GetRequestStream();
+            $requestStream.Write($fileContents, 0, $fileContents.Length);
+            $requestStream.Close();
+            $response = $ftprequest.GetResponse();
+            Write-Host Upload File Complete, status $response.StatusDescription
+            $response.Close();
+        }
     }
 }
 
@@ -145,7 +133,7 @@ Function Run-PasswordTest{
 		}else{
 			foreach ($Folder in $Folders){
 				$key = Get-BootKey -SystemHivePath $Uploads$Folder'\SYSTEM'
-				$DB = $Uploads+$Folder+"\ntds.dit"
+				$DB = $Uploads+$Folder+'\ntds.dit'
 				Get-ADDBAccount -All -DBPath $DB -BootKey $key | Test-PasswordQuality -WeakPasswordsFile $DicPath | Out-File $ResultsFolder$Folder
 				Write-Host "Password testing for $Folder complete"
 				Write-Host "Removing $Folder AD Data export from server for security purposes"
