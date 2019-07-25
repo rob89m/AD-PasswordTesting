@@ -36,7 +36,7 @@ Function Export-ADData{
 	#>
     [CmdletBinding()]
     Param (
-        #[Parameter(Mandatory=$true)][string]$Customer,
+        [Parameter(Mandatory=$true)][string]$Customer,
         [Parameter(Mandatory=$true)][string]$ExportDir,
         [Parameter(Mandatory=$true)][string]$FTPAdd,
         [Parameter(Mandatory=$true)][string]$FTPUser,
